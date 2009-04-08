@@ -22,25 +22,31 @@ def pwn_login(name,password, verbose):
         print buffer.getvalue()
     try:
         logout_regex = re.compile('action=logout;r=\w*')
-        logout_string = logout_regex.findall(buffer.getvalue())[0]
-        open('.logout.info','w').write(logout_string)
-        print 'Logged in and successfully saved information for logout.'
+        if logout_regex.search(buffer.getvalue()):
+            '''logout_string = logout_regex.findall(buffer.getvalue())[0]
+            open('.logout.info','w').write(logout_string)
+            '''
+            print "Successful log-in."
+            return 1
     except IndexError:
         try:
             logged_in_regex = re.compile('You are already logged in')
             if logged_in_regex.search(buffer.getvalue()):
                 print "You're already logged in."
+                return 2
         except IndexError:
             try:
                 invalid_login_regex = re.compile('You have an error: Invalid name or password')
                 if invalid_login_regex.search(buffer.getvalue()):
                     print "Invalid credentials. You will be reported to the authorities."
+                    return 3
             except IndexError:
 	            print "Login Failed! Unknown error."
+	            return 0
     crl.close()
 
 def pwn_logout(verbose):
-    login_url='https://pacewireless.pace.edu/login.pl'+open('.logout.info','r').readline()
+    login_url='https://pacewireless.pace.edu/login.pl?action=logout;r=PJQlK2A3708'
     buffer = StringIO()
     crl = pycurl.Curl()
     crl.setopt(pycurl.URL, login_url)
@@ -49,7 +55,7 @@ def pwn_logout(verbose):
     if verbose:
         print buffer.getvalue()
     try:
-        logout_regex = re.compile('You are already logged in')
+        logout_regex = re.compile('You have successfully logged out.')
         if logout_regex.search(buffer.getvalue()):
             print "Successful logout."
     except IndexError:
@@ -57,11 +63,10 @@ def pwn_logout(verbose):
                 invalid_login_regex = re.compile('This link is not valid for your current session.')
                 alt_invalid_regex = re.compile('404 - File Not Found')
                 if invalid_login_regex.search(buffer.getvalue()) or alt_invalid_regex.search(buffer.getvalue()):
-                    print "Invalid data, the logout information was most likely corrupt."
+                    print "Login Failed! The program was likely corrupted."
             except IndexError:
                     print "Login Failed! Unknown error."
     crl.close()
-    #os.remove('.logout.info')
 
 def main():
     # Parse command line options
@@ -70,6 +75,7 @@ def main():
     except getopt.error, msg:
         print ('python PaceWirelessLogin [-v] [-l| -u username -p password] [--logout| --username=username --password=password]')
         sys.exit(2)
+    print opts, args
     name,password = '',''
     # Process options
     verbose = '-v' in dict(opts)
