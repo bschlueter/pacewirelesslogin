@@ -20,29 +20,24 @@ def pwn_login(name,password, verbose):
     crl.perform()
     if verbose:
         print buffer.getvalue()
-    try:
-        logout_regex = re.compile('action=logout;r=\w*')
-        if logout_regex.search(buffer.getvalue()):
-            '''logout_string = logout_regex.findall(buffer.getvalue())[0]
-            open('.logout.info','w').write(logout_string)
-            '''
-            print "Successful log-in."
-            return 1
-    except IndexError:
-        try:
-            logged_in_regex = re.compile('You are already logged in')
-            if logged_in_regex.search(buffer.getvalue()):
-                print "You're already logged in."
-                return 2
-        except IndexError:
-            try:
-                invalid_login_regex = re.compile('You have an error: Invalid name or password')
-                if invalid_login_regex.search(buffer.getvalue()):
-                    print "Invalid credentials. You will be reported to the authorities."
-                    return 3
-            except IndexError:
-	            print "Login Failed! Unknown error."
-	            return 0
+    #Checking condition
+    logout_regex = re.compile('action=logout;r=\w*')
+    if logout_regex.search(buffer.getvalue()):
+        print "Successful log-in."
+        return 1
+    else:
+        logged_in_regex = re.compile('You are already logged in')
+        if logged_in_regex.search(buffer.getvalue()):
+            print "You're already logged in."
+            return 2
+        else:
+            invalid_login_regex = re.compile('You have an error: Invalid name or password')
+            if invalid_login_regex.search(buffer.getvalue()):
+                print "Invalid credentials. You will be reported to the authorities."
+                return 3
+            else:
+                print "Login Failed! Unknown error."
+                return 0
     crl.close()
 
 def pwn_logout(verbose):
@@ -73,9 +68,8 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'vlu:p:', ['logout','username=','password='])
     except getopt.error, msg:
-        print ('python PaceWirelessLogin [-v] [-l| -u username -p password] [--logout| --username=username --password=password]')
+        print 'python PaceWirelessLogin [-v] [-l| -u username -p password] [--logout| --username=username --password=password]'
         sys.exit(2)
-    print opts, args
     name,password = '',''
     # Process options
     verbose = '-v' in dict(opts)
