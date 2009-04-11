@@ -49,18 +49,16 @@ def pwn_logout(verbose):
     crl.perform()
     if verbose:
         print buffer.getvalue()
-    try:
+    invalid_login_regex = re.compile('This link is not valid for your current session.')
+    alt_invalid_regex = re.compile('404 - File Not Found')
+    if invalid_login_regex.search(buffer.getvalue()) or alt_invalid_regex.search(buffer.getvalue()):
+        print "Login Failed! The program was likely corrupted."
+    else:
         logout_regex = re.compile('You have successfully logged out.')
         if logout_regex.search(buffer.getvalue()):
             print "Successful logout."
-    except IndexError:
-            try:
-                invalid_login_regex = re.compile('This link is not valid for your current session.')
-                alt_invalid_regex = re.compile('404 - File Not Found')
-                if invalid_login_regex.search(buffer.getvalue()) or alt_invalid_regex.search(buffer.getvalue()):
-                    print "Login Failed! The program was likely corrupted."
-            except IndexError:
-                    print "Login Failed! Unknown error."
+        else:
+            print "Login Failed! Unknown error."
     crl.close()
 
 def main():
